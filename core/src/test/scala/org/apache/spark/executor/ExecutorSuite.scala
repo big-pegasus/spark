@@ -106,7 +106,7 @@ class ExecutorSuite extends SparkFunSuite {
     try {
       executor = new Executor("id", "localhost", mockEnv, userClassPath = Nil, isLocal = true)
       // the task will be launched in a dedicated worker thread
-      executor.launchTask(mockExecutorBackend, 0, 0, "", serializedTask)
+      executor.launchTask(mockExecutorBackend, 0, 0, "", serializedTask, null)
 
       executorSuiteHelper.latch1.await()
       // we know the task will be started, but not yet deserialized, because of the latches we
