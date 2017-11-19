@@ -23,7 +23,8 @@ import java.net.URLDecoder;
 import java.security.CodeSource;
 import java.util.Locale;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Optimized JNI calls.
@@ -64,7 +65,7 @@ public final class Native {
     String arch = System.getProperty("os.arch");
     is64Bit = arch.contains("64") || arch.contains("s390x");
 
-    logger = Logger.getLogger(Native.class);
+    logger = LoggerFactory.getLogger(Native.class);
 
     String library = "native" + suffix;
     if (is64Bit()) {
