@@ -217,10 +217,10 @@ case class EnsureRequirements(conf: SQLConf) extends Rule[SparkPlan] {
           // number of partitions. Otherwise, we use maxChildrenNumPartitions.
           if (shufflesAllChildren) defaultNumPreShufflePartitions else maxChildrenNumPartitions
         }
+
         children.zip(requiredChildDistributions).map {
           case (child, distribution) =>
-            val targetPartitioning = createPartitioning(distribution,
-              numPartitions)
+            val targetPartitioning = createPartitioning(distribution, numPartitions)
             if (child.outputPartitioning.guarantees(targetPartitioning)) {
               child
             } else {

@@ -1791,14 +1791,14 @@ private[spark] object JsonProtocolSuite extends Assertions {
       |        {
       |          "ID": 0,
       |          "Name": "$EXECUTOR_DESERIALIZE_TIME",
-      |          "Update": 300,
+      |          "Update": 300.0,
       |          "Internal": true,
       |          "Count Failed Values": true
       |        },
       |        {
       |          "ID": 1,
       |          "Name": "$EXECUTOR_DESERIALIZE_CPU_TIME",
-      |          "Update": 300,
+      |          "Update": 300.0,
       |          "Internal": true,
       |          "Count Failed Values": true
       |        },
@@ -1806,14 +1806,14 @@ private[spark] object JsonProtocolSuite extends Assertions {
       |        {
       |          "ID": 2,
       |          "Name": "$EXECUTOR_RUN_TIME",
-      |          "Update": 400,
+      |          "Update": 400.0,
       |          "Internal": true,
       |          "Count Failed Values": true
       |        },
       |        {
       |          "ID": 3,
       |          "Name": "$EXECUTOR_CPU_TIME",
-      |          "Update": 400,
+      |          "Update": 400.0,
       |          "Internal": true,
       |          "Count Failed Values": true
       |        },
@@ -1834,7 +1834,7 @@ private[spark] object JsonProtocolSuite extends Assertions {
       |        {
       |          "ID": 6,
       |          "Name": "$RESULT_SERIALIZATION_TIME",
-      |          "Update": 700,
+      |          "Update": 700.0,
       |          "Internal": true,
       |          "Count Failed Values": true
       |        },
@@ -1911,7 +1911,7 @@ private[spark] object JsonProtocolSuite extends Assertions {
       |        {
       |          "ID": 15,
       |          "Name": "${shuffleRead.FETCH_WAIT_TIME}",
-      |          "Update": 0,
+      |          "Update": 0.0,
       |          "Internal": true,
       |          "Count Failed Values": true
       |        },

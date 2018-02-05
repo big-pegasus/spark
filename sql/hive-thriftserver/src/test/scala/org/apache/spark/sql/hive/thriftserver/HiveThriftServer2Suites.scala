@@ -579,8 +579,11 @@ class HiveThriftBinaryServerSuite extends HiveThriftJdbcTest {
   test("SPARK-11595 ADD JAR with input path having URL scheme") {
     withJdbcStatement { statement =>
       try {
-        val jarPath = "../hive/src/test/resources/TestUDTF.jar"
-        val jarURL = s"file://${System.getProperty("user.dir")}/$jarPath"
+        val jarPath = sys.props.get("spark.project.home") match {
+          case Some(h) => s"$h/sql/hive/src/test/resources/TestUDTF.jar"
+          case _ => s"${System.getProperty("user.dir")}/../hive/src/test/resources/TestUDTF.jar"
+        }
+        val jarURL = s"file://$jarPath"
 
         Seq(
           s"ADD JAR $jarURL",
@@ -602,7 +605,10 @@ class HiveThriftBinaryServerSuite extends HiveThriftJdbcTest {
         assert(rs1.next())
         assert(rs1.getString(1) === "Usage: N/A.")
 
-        val dataPath = "../hive/src/test/resources/data/files/kv1.txt"
+        val dataPath = sys.props.get("spark.project.home") match {
+          case Some(h) => s"$h/sql/hive/src/test/resources/data/files/kv1.txt"
+          case _ => "../hive/src/test/resources/data/files/kv1.txt"
+        }
 
         Seq(
           s"CREATE TABLE test_udtf(key INT, value STRING)",
@@ -641,8 +647,11 @@ class SingleSessionSuite extends HiveThriftJdbcTest {
   test("test single session") {
     withMultipleConnectionJdbcStatement(
       { statement =>
-        val jarPath = "../hive/src/test/resources/TestUDTF.jar"
-        val jarURL = s"file://${System.getProperty("user.dir")}/$jarPath"
+        val jarPath = sys.props.get("spark.project.home") match {
+          case Some(h) => s"$h/sql/hive/src/test/resources/TestUDTF.jar"
+          case _ => s"${System.getProperty("user.dir")}/../hive/src/test/resources/TestUDTF.jar"
+        }
+        val jarURL = s"file://$jarPath"
 
         // Configurations and temporary functions added in this session should be visible to all
         // the other sessions.

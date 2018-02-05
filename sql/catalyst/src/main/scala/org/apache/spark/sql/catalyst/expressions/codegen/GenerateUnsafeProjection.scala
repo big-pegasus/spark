@@ -109,27 +109,19 @@ object GenerateUnsafeProjection extends CodeGenerator[Seq[Expression], UnsafePro
 
         val writeField = dt match {
           case t: StructType =>
-            val isHomogenousStruct = {
-              var i = 1
-              val ref = ctx.javaType(t.fields(0).dataType)
-              var broken = false || !ctx.isPrimitiveType(ref) || t.length <=1
-              while( !broken && i < t.length) {
-                if (ctx.javaType(t.fields(i).dataType) != ref) {
-                  broken = true
-                }
-                i +=1
-              }
-              !broken
-            }
-            if (isHomogenousStruct) {
+            var ref: DataType = null
+            val isHomogeneousStruct = if (t.length > 0) {
+              ref = t.fields(0).dataType
+              ctx.isPrimitiveType(ref) && !t.tail.exists(_.dataType != ref)
+            } else false
+            if (isHomogeneousStruct) {
               val counter = ctx.freshName("counter")
               val rowWriterChild = ctx.freshName("rowWriterChild")
 
               s"""
-              // Remember the current cursor so that we can calculate how many bytes are
-              // written later.
-
-              final int $tmpCursor = $bufferHolder.cursor;
+                 // Remember the current cursor so that we can calculate how many bytes are
+                 // written later.
+                 final int $tmpCursor = $bufferHolder.cursor;
 
                  if (${input.value} instanceof UnsafeRow) {
                    ${writeUnsafeData(ctx, s"((UnsafeRow) ${input.value})", bufferHolder)};
@@ -138,17 +130,16 @@ object GenerateUnsafeProjection extends CodeGenerator[Seq[Expression], UnsafePro
                        new $rowWriterClass($bufferHolder, ${t.length});
                       $rowWriterChild.reset();
                       for (int $counter = 0; $counter < ${t.length}; ++$counter) {
-                           if (${input.value}.isNullAt($index)) {
-                             $rowWriterChild.setNullAt($index);
+                           if (${input.value}.isNullAt($counter)) {
+                             $rowWriterChild.setNullAt($counter);
                            } else {
                              $rowWriterChild.write($counter,
-                              ${ctx.getValue(input.value, t.fields(0).dataType, counter)});
+                               ${ctx.getValue(input.value, ref, counter)});
                            }
                        }
                  }
                  $rowWriter.setOffsetAndSize($index, $tmpCursor, $bufferHolder.cursor - $tmpCursor);
-            """
-
+              """
             } else {
               s"""
               // Remember the current cursor so that we can calculate how many bytes are

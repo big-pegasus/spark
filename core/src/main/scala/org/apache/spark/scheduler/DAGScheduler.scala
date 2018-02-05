@@ -182,6 +182,8 @@ class DAGScheduler(
   // This is only safe because DAGScheduler runs in a single thread.
   private val closureSerializer = SparkEnv.get.closureSerializer.newInstance()
 
+  private lazy val maxRpcMessageSize = RpcUtils.maxMessageSizeBytes(sc.conf)
+
   /** If enabled, FetchFailed will not cause stage retry, in order to surface the problem. */
   private val disallowStageRetryForTest = sc.getConf.getBoolean("spark.test.noStageRetry", false)
 
@@ -998,7 +1000,9 @@ class DAGScheduler(
       // use direct byte shipping for small size or if number of partitions is small
       val taskBytesLen = taskBinaryBytes.length
       if (taskBytesLen <= DAGScheduler.TASK_INLINE_LIMIT ||
-          partitionsToCompute.length <= DAGScheduler.TASK_INLINE_PARTITION_LIMIT) {
+        partitionsToCompute.length == 1 ||
+        (taskBytesLen < math.min(maxRpcMessageSize, DAGScheduler.TASK_INLINE_UPPER_LIMIT) &&
+          partitionsToCompute.length <= DAGScheduler.TASK_INLINE_PARTITION_LIMIT)) {
         if (stage.taskData.uncompressedLen > 0) {
           taskData = stage.taskData
         } else {
@@ -1693,7 +1697,11 @@ private[spark] object DAGScheduler {
 
   // The maximum size of uncompressed common task bytes (rdd, closure)
   // that will be shipped with the task else will be broadcast separately.
-  val TASK_INLINE_LIMIT = 100 * 1024
+  val TASK_INLINE_LIMIT: Int = 128 * 1024
+
+  // Maximum size beyond which common task bytes will always be broadcast even if number
+  // of partitions is smaller than TASK_INLINE_PARTITION_LIMIT (except if it is 1)
+  val TASK_INLINE_UPPER_LIMIT: Int = 4 * 1024 * 1024
 
   // The maximum number of partitions below which common task bytes will be
   // shipped with the task else will be broadcast separately.

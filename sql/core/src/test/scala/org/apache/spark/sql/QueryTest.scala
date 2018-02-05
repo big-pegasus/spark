@@ -301,7 +301,7 @@ object QueryTest {
       case null => null
       case d: java.math.BigDecimal => BigDecimal(d)
       case d: Decimal => d.toBigDecimal // to use BigDecimal.compareTo == 0
-      case d: Double => math.floor(d * 1000.0 + 0.5) // round to three digits
+      case d: Double => math.floor(d * 1000.0 + 0.5) / 1000.0 // round to three digits
       // Convert array to Seq for easy equality check.
       case b: Array[_] => b.toSeq
       case r: Row => prepareRow(r)

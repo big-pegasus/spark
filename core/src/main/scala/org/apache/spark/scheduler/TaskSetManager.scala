@@ -373,7 +373,7 @@ private[spark] class TaskSetManager(
    * @return An option containing (task index within the task set, locality, is speculative?)
    */
   private def dequeueTask(execId: String, host: String, maxLocality: TaskLocality.Value)
-  : Option[(Int, TaskLocality.Value, Boolean)] =
+    : Option[(Int, TaskLocality.Value, Boolean)] =
   {
     for (index <- dequeueTaskFromList(execId, host, getPendingTasksForExecutor(execId))) {
       return Some((index, TaskLocality.PROCESS_LOCAL, false))
@@ -465,7 +465,6 @@ private[spark] class TaskSetManager(
           lastLaunchTime = curTime
         }
         // Serialize and return the task
-        val startTime = clock.getTimeMillis()
         val serializedTask: ByteBuffer = try {
           Task.serializeWithDependencies(task, sched.sc.addedFiles, sched.sc.addedJars, ser)
         } catch {
@@ -937,7 +936,7 @@ private[spark] class TaskSetManager(
   }
 
   private def getLocalityWait(level: TaskLocality.TaskLocality): Long = {
-    val defaultWait = conf.get("spark.locality.wait", "10s")
+    val defaultWait = conf.get("spark.locality.wait", "3s")
     val localityWaitKey = level match {
       case TaskLocality.PROCESS_LOCAL => "spark.locality.wait.process"
       case TaskLocality.NODE_LOCAL => "spark.locality.wait.node"
@@ -995,5 +994,5 @@ private[spark] class TaskSetManager(
 private[spark] object TaskSetManager {
   // The user will be warned if any stages contain a task that has a serialized size greater than
   // this.
-  val TASK_SIZE_TO_WARN_KB = 128
+  val TASK_SIZE_TO_WARN_KB = 512
 }

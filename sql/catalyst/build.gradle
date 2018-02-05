@@ -26,8 +26,8 @@ dependencies {
 
   compile group: 'org.scala-lang', name: 'scala-compiler', version: scalaVersion
   // compile group: 'org.scala-lang.modules', name: 'scala-parser-combinators_' + scalaBinaryVersion, version: '1.0.4'
-  compile group: 'org.codehaus.janino', name: 'janino', version: '3.0.7'
-  compile group: 'org.codehaus.janino', name: 'commons-compiler', version: '3.0.7'
+  compile group: 'org.codehaus.janino', name: 'janino', version: janinoVersion
+  compile group: 'org.codehaus.janino', name: 'commons-compiler', version: janinoVersion
   compile group: 'org.antlr', name: 'antlr4-runtime', version: antlrVersion
   compile group: 'commons-codec', name: 'commons-codec', version: commonsCodecVersion
   antlr group: 'org.antlr', name: 'antlr4', version: antlrVersion

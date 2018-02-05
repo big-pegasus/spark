@@ -98,9 +98,9 @@ private[spark] abstract class Task[T](
    * @return the result of the task along with updates of Accumulators.
    */
   final def run(
-                 taskAttemptId: Long,
-                 attemptNumber: Int,
-                 metricsSystem: MetricsSystem): T = {
+      taskAttemptId: Long,
+      attemptNumber: Int,
+      metricsSystem: MetricsSystem): T = {
     SparkEnv.get.blockManager.registerTask(taskAttemptId)
     context = new TaskContextImpl(
       stageId,
@@ -203,8 +203,8 @@ private[spark] abstract class Task[T](
         // value will be updated at driver side.
         // Note: internal accumulators representing task metrics always count failed values
         !a.isZero || a.name == Some(InternalAccumulator.RESULT_SIZE)
-        // zero value external accumulators may still be useful,
-        // e.g. SQLMetrics, we should not filter them out.
+      // zero value external accumulators may still be useful, e.g. SQLMetrics, we should not filter
+      // them out.
       } ++ context.taskMetrics.externalAccums.filter(a => !taskFailed || a.countFailedValues)
     } else {
       Seq.empty
@@ -282,27 +282,33 @@ private[spark] object Task {
    * Serialize a task and the current app dependencies (files and JARs added to the SparkContext)
    */
   def serializeWithDependencies(
-                                 task: Task[_],
-                                 currentFiles: mutable.Map[String, Long],
-                                 currentJars: mutable.Map[String, Long],
-                                 serializer: SerializerInstance)
-  : ByteBuffer = {
+      task: Task[_],
+      currentFiles: mutable.Map[String, Long],
+      currentJars: mutable.Map[String, Long],
+      serializer: SerializerInstance)
+    : ByteBuffer = {
 
     val out = new ByteBufferOutputStream(4096)
     val dataOut = new DataOutputStream(out)
 
     // Write currentFiles
-    dataOut.writeInt(currentFiles.size)
-    for ((name, timestamp) <- currentFiles) {
-      dataOut.writeUTF(name)
-      dataOut.writeLong(timestamp)
+    val numFiles = currentFiles.size
+    dataOut.writeInt(numFiles)
+    if (numFiles > 0) {
+      for ((name, timestamp) <- currentFiles) {
+        dataOut.writeUTF(name)
+        dataOut.writeLong(timestamp)
+      }
     }
 
     // Write currentJars
-    dataOut.writeInt(currentJars.size)
-    for ((name, timestamp) <- currentJars) {
-      dataOut.writeUTF(name)
-      dataOut.writeLong(timestamp)
+    val numJars = currentJars.size
+    dataOut.writeInt(numJars)
+    if (numJars > 0) {
+      for ((name, timestamp) <- currentJars) {
+        dataOut.writeUTF(name)
+        dataOut.writeLong(timestamp)
+      }
     }
 
     // Write the task properties separately so it is available before full task deserialization.
@@ -332,10 +338,10 @@ private[spark] object Task {
    * and return the task itself as a serialized ByteBuffer. The caller can then update its
    * ClassLoaders and deserialize the task.
    *
-   * @return (taskFiles, taskJars, taskBytes)
+   * @return (taskFiles, taskJars, taskProps, taskBytes)
    */
   def deserializeWithDependencies(serializedTask: ByteBuffer)
-  : (HashMap[String, Long], HashMap[String, Long], Properties, ByteBuffer) = {
+    : (HashMap[String, Long], HashMap[String, Long], Properties, ByteBuffer) = {
 
     val in = new ByteBufferInputStream(serializedTask)
     val dataIn = new DataInputStream(in)
@@ -377,14 +383,15 @@ private[spark] final class TaskData private(var compressedBytes: Array[Byte],
   @transient private var decompressed: Array[Byte] = _
 
   /** decompress the common task data if present */
-  def decompress(env: SparkEnv = SparkEnv.get): Array[Byte] = {
+  def decompress(env: SparkEnv = SparkEnv.get): (Array[Byte], Long) = {
     if (uncompressedLen > 0) {
       if (decompressed eq null) {
+        val startDecompression = System.nanoTime()
         decompressed = env.createCompressionCodec.decompress(compressedBytes,
           0, compressedBytes.length, uncompressedLen)
-      }
-      decompressed
-    } else TaskData.EMPTY_BYTES
+        decompressed -> math.max(System.nanoTime() - startDecompression, 0L)
+      } else decompressed -> 0L
+    } else TaskData.EMPTY_BYTES -> 0L
   }
 
   override def hashCode(): Int = java.util.Arrays.hashCode(compressedBytes)

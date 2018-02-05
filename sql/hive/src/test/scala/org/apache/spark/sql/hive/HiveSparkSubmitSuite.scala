@@ -174,14 +174,12 @@ class HiveSparkSubmitSuite
     }
     val jarDir = getTestResourcePath("regression-test-SPARK-8489")
     val testJar = s"$jarDir/test-$version.jar"
-    val testJarPath = sys.props.get("spark.project.home").map(
-      _ + '/' + testJar).getOrElse(testJar)
     val args = Seq(
       "--conf", "spark.ui.enabled=false",
       "--conf", "spark.master.rest.enabled=false",
       "--driver-java-options", "-Dderby.system.durability=test",
       "--class", "Main",
-      testJarPath)
+      testJar)
     runSparkSubmit(args)
   }
 
