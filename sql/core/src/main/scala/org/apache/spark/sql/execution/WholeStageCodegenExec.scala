@@ -376,7 +376,7 @@ case class WholeStageCodegenExec(child: SparkPlan) extends UnaryExecNode with Co
     val durationMs = longMetric("pipelineTime")
 
     val rdds = child.asInstanceOf[CodegenSupport].inputRDDs()
-    new WholeStageCodegenRDD(sqlContext.sparkContext, cleanedSource,
+    WholeStageCodegenRDD(sqlContext.sparkContext, cleanedSource,
       references, durationMs, rdds)
   }
 
