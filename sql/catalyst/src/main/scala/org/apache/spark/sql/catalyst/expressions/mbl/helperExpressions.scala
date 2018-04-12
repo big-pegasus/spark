@@ -48,6 +48,43 @@ case class IterRef(iterName: String) extends Expression with NonSQLExpression {
   override def children: Seq[Expression] = Nil
 }
 
+case class ForStep4Expr(diff: Expression, step: Int, iter: IterRef, child: Expression)
+  extends Expression with NonSQLExpression {
+
+  override def children: Seq[Expression] = diff :: child :: Nil
+
+  override def foldable: Boolean = false
+
+  override def checkInputDataTypes(): TypeCheckResult = TypeCheckResult.TypeCheckSuccess
+
+  override def dataType: DataType = BooleanType
+
+  override def nullable: Boolean = false
+
+  override def deterministic: Boolean = false
+
+  val iterName: String = iter.iterName
+
+  override def eval(input: InternalRow): Any = true
+
+  override def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode = {
+    val values = ctx.freshName("values")
+    ctx.addMutableState("int", iterName, s"this.$iterName = 0;")
+    val sizeExpr = diff.genCode(ctx)
+    ev.copy(code = sizeExpr.code + s""";
+      for (this.$iterName = 0; this.$iterName < """
+      + sizeExpr.value + s"""; this.$iterName += $step) {
+      """ + child.genCode(ctx).code +  s"""
+      }
+      final boolean ${ev.isNull} = false;
+      final boolean ${ev.value} = true; /* for code end here */
+      """, isNull = "false")
+  }
+
+  override def prettyName: String = "for_step_4_expr"
+}
+
+
 case class ForStep(size: Int, step: Int, iter: IterRef, child: Expression)
   extends Expression with NonSQLExpression {
 
