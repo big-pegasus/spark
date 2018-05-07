@@ -50,7 +50,7 @@ case class DailyPriceMBL4SCD(children: Seq[Expression]) extends DeclarativeAggre
     val compPrice = children(4)
     val mtPrice = children(5)
 
-    var diff = ((endTimeLong - startTimeLong) % 86400) / stepInSeconds
+    var diff = (endTimeLong % 86400 / stepInSeconds) - (startTimeLong % 86400 / stepInSeconds) + 1
     diff = If(diff > pointSpan, diff, pointSpan)
 
     Seq(
