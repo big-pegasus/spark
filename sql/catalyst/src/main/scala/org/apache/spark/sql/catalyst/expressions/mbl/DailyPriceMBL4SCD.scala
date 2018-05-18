@@ -50,8 +50,10 @@ case class DailyPriceMBL4SCD(children: Seq[Expression]) extends DeclarativeAggre
     val compPrice = children(4)
     val mtPrice = children(5)
 
-    val diff = (endTimeLong % 86400 / stepInSeconds) - (startTimeLong % 86400 / stepInSeconds) + 1
-//    diff = If(diff > pointSpan, diff, pointSpan)
+// =1 因为当endTimeLong-startTimeLong<stepInSeconds时需要=1
+// 此处可以斟酌 (endTimeLong/stepInSeconds-startTimeLong/stepInSeconds)
+    val tempDiff = Cast((endTimeLong / stepInSeconds) - (startTimeLong / stepInSeconds), IntegerType)
+    val diff = If(tempDiff < 1, 1, tempDiff)
 
     Seq(
       DoSeq(
@@ -67,6 +69,8 @@ case class DailyPriceMBL4SCD(children: Seq[Expression]) extends DeclarativeAggre
 
           val weight = children(6)
 
+// 会有:今天的数据，但是startTimeLong是昨天的23:59:59，目前忽略这部分数据(不到100条)
+// 这类数据会导致pointIndex0 > numPoints, pointIndex0取模最好--
           If(pointIndex0 < numPoints &&
             (prevWeight < 0 || compPrice < prevCompPrice ||
               compPrice === prevCompPrice && mtPrice < prevMtPrice),
