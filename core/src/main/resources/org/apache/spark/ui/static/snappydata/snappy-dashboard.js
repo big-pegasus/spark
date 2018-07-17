@@ -1,6 +1,10 @@
 
+var isGoogleChartLoaded = false;
 var isMemberCellExpanded = {};
 
+function updateCoreDetails(coresInfo) {
+  $("#totalCores").html(coresInfo.totalCores);
+}
 
 function toggleCellDetails(detailsId) {
 
@@ -348,6 +352,14 @@ function getExternalTableStatsGridConf() {
 }
 
 function updateUsageCharts(statsData){
+
+  // Load charts library if not already loaded
+  if(!isGoogleChartLoaded) {
+    // Set error message
+    $("#googleChartsErrorMsg").show();
+    return;
+  }
+
   var cpuChartData = new google.visualization.DataTable();
   cpuChartData.addColumn('datetime', 'Time of Day');
   cpuChartData.addColumn('number', 'CPU');
@@ -454,20 +466,39 @@ function updateUsageCharts(statsData){
     diskSpaceUsageChart.draw(diskSpaceUsageChartData, diskSpaceUsageChartOptions);
 }
 
-function loadGoogleCharts(){
-  google.charts.load('current', {'packages':['corechart']});
-  google.charts.setOnLoadCallback(googleChartsLoaded);
+function loadGoogleCharts() {
+
+  if((typeof google === 'object' && typeof google.charts === 'object')) {
+    $("#googleChartsErrorMsg").hide();
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(googleChartsLoaded);
+    isGoogleChartLoaded = true;
+  } else {
+    $("#googleChartsErrorMsg").show();
+  }
+
 }
 
-function googleChartsLoaded(){
+function googleChartsLoaded() {
   loadClusterInfo();
 }
 
 function loadClusterInfo() {
+
+  if(!isGoogleChartLoaded) {
+    $.ajax({
+      url: "https://www.gstatic.com/charts/loader.js",
+      dataType: "script",
+      success: function() {
+        loadGoogleCharts()
+      }
+    });
+  }
+
   $.ajax({
     url:"/snappy-api/services/clusterinfo",
     dataType: 'json',
-    timeout: 5000,
+    // timeout: 5000,
     success: function (response, status, jqXHR) {
 
       // Hide error message, if displayed
@@ -499,6 +530,8 @@ function loadClusterInfo() {
       } else {
         extTableStatsGridCurrPage = 0;
       }
+
+      updateCoreDetails(clusterInfo.coresInfo);
 
     },
     error: ajaxRequestErrorHandler

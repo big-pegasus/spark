@@ -152,6 +152,36 @@
   font-weight: bold;
 }
 
+#CPUCoresContainer {
+  position: absolute;
+  width: 100%;
+}
+
+#CPUCoresDetails {
+  width: 150px;
+  max-height: 60px;
+  background-color: #A0DFFF;
+  border: 2px solid #9EBFE4;
+  border-radius: 5px;
+  position: relative;
+  margin: 5px 50px 5px auto;
+  padding: 0px 5px;
+  overflow: auto;
+}
+
+#TotalCoresHolder {
+  width: 150px;
+  float: right;
+  font-weight: bold;
+  text-align: center;
+}
+
+#DistribCoresHolder {
+  width: 280px;
+  background-color: #B3F2FF;
+  display: none;
+}
+
 .graph-container {
   width: 400px;
   height: 200px;

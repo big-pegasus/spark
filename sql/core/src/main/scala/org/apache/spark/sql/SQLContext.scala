@@ -33,7 +33,7 @@ import org.apache.spark.sql.catalyst._
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.util.ArrayData
 import org.apache.spark.sql.execution.command.ShowTablesCommand
-import org.apache.spark.sql.internal.{SQLConf, SessionState, SharedState}
+import org.apache.spark.sql.internal.{SessionState, SharedState, SQLConf}
 import org.apache.spark.sql.sources.BaseRelation
 import org.apache.spark.sql.streaming.{DataStreamReader, StreamingQueryManager}
 import org.apache.spark.sql.types._
