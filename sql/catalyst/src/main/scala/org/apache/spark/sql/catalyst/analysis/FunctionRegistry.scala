@@ -419,7 +419,9 @@ object FunctionRegistry {
     expression[PriceMBL]("builtin_price_mbl"),
     expression[DailyPriceMBL]("builtin_daily_price_mbl"),
     expression[RoomStatusMBL]("builtin_room_status_mbl"),
+    expression[ReasonAnalysisDailyPriceMBL]("builtin_ra_daily_price_mbl"),
     expression[SumMBL]("builtin_sum_mbl"),
+    expression[ReasonAnalysisSumMBL]("builtin_ra_sum_mbl"),
     expression[DailyPriceMBL4SCD]("builtin_daily_price_mbl_scd"),
     expression[SCD4TimeGenerator]("scd_time_generator"),
 
