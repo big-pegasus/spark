@@ -46,12 +46,12 @@ case class ReasonAnalysisSumMBL(children: Seq[Expression]) extends DeclarativeAg
   private lazy val loseReasons: UTF8String = children(3).eval().asInstanceOf[UTF8String]
 
 
-  private lazy val meetReasonLength: Int = (meetReasons.toString.length() + 1) / 2
-  private lazy val beatReasonLength: Int = (beatReasons.toString.length() + 1) / 2
-  private lazy val loseReasonLength: Int = (loseReasons.toString.length() + 1) / 2
+  private lazy val meetReasonLength: Int = meetReasons.toString.split("_").length
+  private lazy val beatReasonLength: Int = beatReasons.toString.split("_").length
+  private lazy val loseReasonLength: Int = loseReasons.toString.split("_").length
 
   // length for reason
-  private lazy val reasonsLength: Integer = meetReasonLength + beatReasonLength + loseReasonLength -1
+  private lazy val reasonsLength: Integer = meetReasonLength + beatReasonLength + loseReasonLength
 
   // number of points
   private def numBufferPoints: Integer = 1024 * reasonsLength
@@ -112,7 +112,7 @@ case class ReasonAnalysisSumMBL(children: Seq[Expression]) extends DeclarativeAg
 
     Seq(
       DoSeq(
-        ForStep(numBufferPoints , reasonsLength.intValue(), i, {
+        ForStep(numBufferPoints, reasonsLength.intValue(), i, {
           val j = (i/Literal(reasonsLength.intValue()))*4
 
           val weight = GetArrayItem(children.head, j)
@@ -126,24 +126,18 @@ case class ReasonAnalysisSumMBL(children: Seq[Expression]) extends DeclarativeAg
           val lose = compValue < mtValue
 
           // convert actual reason to encoded reason for mbl separately in case of duplicated
-          val encodedReason = If(meet, reason | ((1 & 0xF)<<24),
+          val encodedReason = If(compValue>=0 && mtValue>=0,
+                                If(meet, reason | ((1 & 0xF)<<24),
                                   If(beat, reason | ((2 & 0xF)<<24),
-                                    If(lose, reason | ((3 & 0xF)<<24), Literal(-1))))
+                                    If(lose, reason | ((3 & 0xF)<<24), Literal(-1)))),
+                              Literal(-1))
 
           val ri = GetMapValue(reasonIndexes, encodedReason)
 
-          val meetCount = GetArrayItem(sumPoints, i + ri)
-          val beatCount = GetArrayItem(sumPoints, i + ri)
-          val loseCount = GetArrayItem(sumPoints, i + ri)
-
+          val oldCount = GetArrayItem(sumPoints, i + ri)
 
           If (weight > 0 && ri >= 0,
-            If (meet, DoSeq(SetArrayItem(sumPoints, i + ri, meetCount  + weight), sumPoints),
-              If (beat, DoSeq(SetArrayItem(sumPoints, i + ri, beatCount + weight), sumPoints),
-                If (lose, DoSeq(SetArrayItem(sumPoints, i + ri, loseCount + weight), sumPoints),
-                  sumPoints)
-              )
-            ),
+            DoSeq(SetArrayItem(sumPoints, i + ri, oldCount  + weight), sumPoints),
             sumPoints)
         }),
         sumPoints),
@@ -159,7 +153,7 @@ case class ReasonAnalysisSumMBL(children: Seq[Expression]) extends DeclarativeAg
       DoSeq(
         ForStep(numBufferPoints, reasonsLength, i, {
 
-          val j = UDFUtils.makeIter("ra_sum_mbl_mergeExpressions")
+          val j = UDFUtils.makeIter("ra_sum_mbl_mergeExpressions_reasons")
 
           DoSeq(
             ForStep(reasonsLength, 1, j, {
@@ -188,6 +182,7 @@ case class ReasonAnalysisSumMBL(children: Seq[Expression]) extends DeclarativeAg
                  reasonIndex < (meetReasonLength + beatReasonLength)
     val beLose = reasonIndex >= (meetReasonLength + beatReasonLength) &&
                  reasonIndex < (meetReasonLength + beatReasonLength + loseReasonLength)
+
 
     val meet = If(beMeet, GetArrayItem(sumPoints, i), Literal(0))
     val beat = If(beBeat, GetArrayItem(sumPoints, i), Literal(0))

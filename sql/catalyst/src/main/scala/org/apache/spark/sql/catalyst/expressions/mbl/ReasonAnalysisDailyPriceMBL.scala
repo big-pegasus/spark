@@ -85,6 +85,7 @@ case class ReasonAnalysisDailyPriceMBL(children: Seq[Expression]) extends Declar
           val prevWeight = GetArrayItemWithSize(arraySize, points, pointIndex0)
           val prevCompPrice = GetArrayItemWithSize(arraySize, points, pointIndex1)
           val prevMtPrice = GetArrayItemWithSize(arraySize, points, pointIndex2)
+          val prevReason = GetArrayItemWithSize(arraySize, points, pointIndex3)
 
 
           If(pointIndex0 < numPoints &&
