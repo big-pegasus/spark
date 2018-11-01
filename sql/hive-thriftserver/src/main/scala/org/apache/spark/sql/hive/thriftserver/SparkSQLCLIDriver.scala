@@ -38,7 +38,7 @@ import org.apache.thrift.transport.TSocket
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.AnalysisException
-import org.apache.spark.sql.hive.{HiveSessionState, HiveUtils}
+import org.apache.spark.sql.hive.HiveUtils
 import org.apache.spark.util.ShutdownHookManager
 
 /**
@@ -189,7 +189,11 @@ private[hive] object SparkSQLCLIDriver extends Logging {
     try {
       if (new File(historyDirectory).exists()) {
         val historyFile = historyDirectory + File.separator + ".hivehistory"
-        reader.setHistory(new FileHistory(new File(historyFile)))
+        // skip doInit to enable setting max-size before load
+        val history = new FileHistory(new File(historyFile), false)
+        history.setMaxSize(50000)
+        history.load()
+        reader.setHistory(history)
       } else {
         logWarning("WARNING: Directory for Hive history file: " + historyDirectory +
                            " does not exist.   History will not be available during this session.")

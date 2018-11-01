@@ -26,7 +26,7 @@ import org.apache.hive.service.cli.session.HiveSession
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.hive.HiveSessionState
+import org.apache.spark.sql.hive.HiveUtils
 import org.apache.spark.sql.hive.thriftserver.{ReflectionUtils, SparkExecuteStatementOperation}
 
 /**
@@ -35,7 +35,7 @@ import org.apache.spark.sql.hive.thriftserver.{ReflectionUtils, SparkExecuteStat
 private[thriftserver] class SparkSQLOperationManager()
   extends OperationManager with Logging {
 
-  val handleToOperation = ReflectionUtils
+  val handleToOperation: JMap[OperationHandle, Operation] = ReflectionUtils
     .getSuperField[JMap[OperationHandle, Operation]](this, "handleToOperation")
 
   val sessionToActivePool = new ConcurrentHashMap[SessionHandle, String]()
@@ -49,8 +49,8 @@ private[thriftserver] class SparkSQLOperationManager()
     val sqlContext = sessionToContexts.get(parentSession.getSessionHandle)
     require(sqlContext != null, s"Session handle: ${parentSession.getSessionHandle} has not been" +
       s" initialized or had already closed.")
-    val sessionState = sqlContext.sessionState.asInstanceOf[HiveSessionState]
-    val runInBackground = async && sessionState.hiveThriftServerAsync
+    val runInBackground = async &&
+        sqlContext.sessionState.conf.getConf(HiveUtils.HIVE_THRIFT_SERVER_ASYNC)
     val operation = new SparkExecuteStatementOperation(parentSession, statement, confOverlay,
       runInBackground)(sqlContext, sessionToActivePool)
     handleToOperation.put(operation.getHandle, operation)
