@@ -178,7 +178,7 @@ String extraResourceDir = "${projectDir}/src/main/extra-resources"
 
 task generateBuildInfo {
   outputs.file "${extraResourceDir}/spark-version-info.properties"
-  inputs.dir projectDir
+  inputs.file "${rootProject.projectDir}/build.gradle"
 
   doLast {
     file(extraResourceDir).mkdirs()
